@@ -148,7 +148,8 @@ Title: `[Task] CI/CD`
    [run in the `VS Code Terminal`](../../../wiki/vs-code.md#run-a-command-in-the-vs-code-terminal):
 
    ```terminal
-   docker compose --env-file .env.docker.secret down && docker compose --env-file .env.docker.secret up --build -d
+   docker compose --env-file .env.docker.secret down -v
+   docker compose --env-file .env.docker.secret up --build -d
    ```
 
    <h4>Missing <code>.env.docker.secret</code></h4>
