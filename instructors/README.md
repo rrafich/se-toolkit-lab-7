@@ -7,6 +7,8 @@
 - [Get meeting transcript](#get-meeting-transcript)
 - [Get meeting report](#get-meeting-report)
 - [Enter the devshell](#enter-the-devshell)
+- [Review a file by conventions](#review-a-file-by-conventions)
+- [Lessons learned](#lessons-learned)
 
 ## Set up a new lab
 
@@ -65,3 +67,11 @@ Steps:
 ## Enter the devshell
 
 <!-- TODO link to setup -->
+
+## Review a file by conventions
+
+Use the `Claude` skill `/review-file-by-conventions <filepath>`.
+
+## Lessons learned
+
+- First check a file from the instructional point of view, then work on the formatting (see [review a file](#review-a-file-by-conventions)).
