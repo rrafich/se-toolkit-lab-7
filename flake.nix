@@ -34,7 +34,17 @@
               "2-back-tools" = [
                 pkgs.uv
               ];
-              "3-lint-scripts" = [
+              "3-lint-tools" = [
+                pkgs.lychee
+              ];
+              "4-instructors" = [
+                {
+                  name = "process-meeting-transcript";
+                  command = ''
+                    ${pkgs.lib.getExe python} ${./instructors/scripts/process-meeting-transcript/process-meeting-transcript.py} "$@"
+                  '';
+                  help = "Process a meeting transcript directory into speaker-labelled text files";
+                }
                 {
                   name = "find-broken-links";
                   command = ''
@@ -67,18 +77,6 @@
                       '#instructors/{file-reviews,meetings,scripts}'
                   '';
                   help = "Lint all Markdown files";
-                }
-              ];
-              "4-lint-tools" = [
-                pkgs.lychee
-              ];
-              "5-instructors" = [
-                {
-                  name = "process-meeting-transcript";
-                  command = ''
-                    ${pkgs.lib.getExe python} ${./instructors/scripts/process-meeting-transcript/process-meeting-transcript.py} "$@"
-                  '';
-                  help = "Process a meeting transcript directory into speaker-labelled text files";
                 }
               ];
             };
