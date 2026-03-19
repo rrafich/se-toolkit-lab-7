@@ -5,6 +5,7 @@
 - [About the LMS API deployment](#about-the-lms-api-deployment)
 - [Deploy the LMS API on the VM](#deploy-the-lms-api-on-the-vm)
   - [Clone the repository (REMOTE)](#clone-the-repository-remote)
+  - [Enter the repository directory (REMOTE)](#enter-the-repository-directory-remote)
   - [Configure the environment (REMOTE)](#configure-the-environment-remote)
   - [Start the services (REMOTE)](#start-the-services-remote)
   - [Populate the database (LOCAL)](#populate-the-database-local)
@@ -29,7 +30,9 @@ This page describes how to deploy the [LMS API](./lms-api.md#about-the-lms-api) 
 
    Replace the placeholder [`<your-github-username>`](./github.md#your-github-username).
 
-4. To enter the [repository](./git.md#repository) directory,
+### Enter the repository directory (REMOTE)
+
+1. To enter the [directory](./file-system.md#directory) of your [repository](./git.md#repository),
 
    [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
 
