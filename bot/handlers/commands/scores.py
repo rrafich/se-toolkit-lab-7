@@ -48,10 +48,13 @@ def handle_scores(args: str = "") -> str:
 
         lines = [f"📊 Pass rates for {lab_name}:\n"]
         for rate in pass_rates:
-            task_title = rate.get("task_title", rate.get("title", "Unknown Task"))
-            pass_rate = rate.get("pass_rate", 0) * 100  # Convert to percentage
+            task_title = rate.get(
+                "task", rate.get("task_title", rate.get("title", "Unknown Task"))
+            )
+            avg_score = rate.get("avg_score", rate.get("pass_rate", 0))
+            # avg_score is already a percentage (0-100), not a ratio (0-1)
             attempts = rate.get("attempts", 0)
-            lines.append(f"• {task_title}: {pass_rate:.1f}% ({attempts} attempts)")
+            lines.append(f"• {task_title}: {avg_score:.1f}% ({attempts} attempts)")
 
         return "\n".join(lines)
 
