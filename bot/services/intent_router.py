@@ -134,6 +134,23 @@ class IntentRouter:
                 self._debug(f"[summary] LLM response: {response_text[:100]}...")
                 return response_text
 
+            # Add assistant message with tool calls to conversation
+            assistant_message = {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "function": {
+                            "name": call["name"],
+                            "arguments": json.dumps(call["arguments"]),
+                        },
+                        "id": call["id"],
+                        "type": "function",
+                    }
+                    for call in tool_calls
+                ],
+            }
+            messages.append(assistant_message)
+
             # Execute tools and collect results
             tool_results = []
             for call in tool_calls:
