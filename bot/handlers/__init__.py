@@ -1,9 +1,6 @@
-"""Command handlers for the LMS Telegram Bot.
+"""Command handlers for the LMS Telegram Bot."""
 
-Handlers are plain functions that take input and return text.
-They don't depend on Telegram - same logic works from --test mode,
-unit tests, or the Telegram bot.
-"""
+from handlers.commands import route_command
 
 from .commands.start import handle_start
 from .commands.help import handle_help
