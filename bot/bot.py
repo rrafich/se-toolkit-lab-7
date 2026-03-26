@@ -2,8 +2,8 @@
 """LMS Telegram Bot entry point.
 
 Usage:
-    uv run bot.py              # Run as Telegram bot
-    uv run bot.py --test "message"  # Test mode - print response to stdout
+    uv run python bot.py              # Run as Telegram bot
+    uv run python bot.py --test "hello"  # Test mode - print response to stdout
 """
 
 import sys
@@ -24,7 +24,7 @@ from handlers import (
     handle_message,
     handle_callback,
 )
-from services import LmsClient, LlmClient
+from services import route_query
 
 
 # Command registry - maps commands to handler functions
@@ -37,17 +37,12 @@ COMMANDS = {
 }
 
 
-def route_command(command: str, llm_client: LlmClient | None = None, lms_client: LmsClient | None = None) -> str | tuple[str, Any]:
-    """Route a command to the appropriate handler.
-    
-    If the command doesn't start with '/', treat it as natural language
-    and pass it to the LLM for intent-based routing.
-    
+def run_command(command: str) -> str:
+    """Run a command and return the response.
+
     Args:
-        command: The command string (e.g., "/start" or "what labs are available")
-        llm_client: LLM client for natural language queries
-        lms_client: LMS client for API calls
-        
+        command: The command string (e.g., "/start" or "/scores lab-04")
+
     Returns:
         The handler's response (string or tuple of text + keyboard)
     """
@@ -63,28 +58,22 @@ def route_command(command: str, llm_client: LlmClient | None = None, lms_client:
     parts = command.split(maxsplit=1)
     cmd = parts[0].lower()
     args = parts[1] if len(parts) > 1 else ""
-    
+
     # Look up handler
     handler = COMMANDS.get(cmd)
-    
+
     if handler is None:
-        return (
-            f"❓ Unknown command: {cmd}\n\n"
-            f"Use /help to see available commands.\n\n"
-            f"Or just ask me a question in natural language!"
-        )
-    
+        return f"❓ Unknown command: {cmd}\n\nUse /help to see available commands."
+
     # Call handler and return response
     return handler(args)
 
 
 def run_test_mode(message: str, llm_client: LlmClient, lms_client: LmsClient) -> None:
     """Run in test mode - print response to stdout and exit.
-    
+
     Args:
-        message: The message to test (command or natural language)
-        llm_client: LLM client for natural language queries
-        lms_client: LMS client for API calls
+        command: The command or message to test
     """
     response = route_command(message, llm_client, lms_client)
     
@@ -98,120 +87,36 @@ def run_test_mode(message: str, llm_client: LlmClient, lms_client: LmsClient) ->
     sys.exit(0)
 
 
+def handle_natural_language(message: str) -> str:
+    """Handle natural language messages via LLM routing.
+
+    Args:
+        message: User's natural language message
+
+    Returns:
+        Response from the intent router
+    """
+    return route_query(message)
+
+
 def run_telegram_bot() -> None:
-    """Run the bot as a Telegram bot using aiogram."""
-    try:
-        from aiogram import Bot, Dispatcher, types
-        from aiogram.filters import CommandStart, Command
-    except ImportError:
-        print("Error: aiogram not installed. Run: uv sync")
-        sys.exit(1)
-    
+    """Run the bot as a Telegram bot.
+
+    Note: This is a placeholder. Task 4 will implement the actual
+    Telegram bot using python-telegram-bot library.
+    """
     config = load_config()
-    
+
     if not config["bot_token"]:
         print("Error: BOT_TOKEN not set in .env.bot.secret")
         sys.exit(1)
-    
-    # Initialize clients
-    lms_client = LmsClient(config["lms_api_base_url"], config["lms_api_key"])
-    llm_client = LlmClient(config["llm_api_key"], config["llm_api_base_url"], config["llm_api_model"])
-    
-    # Initialize bot and dispatcher
-    bot = Bot(token=config["bot_token"])
-    dp = Dispatcher()
-    
-    print("Telegram bot starting...")
-    print(f"Config loaded: LMS_API={config['lms_api_base_url']}, LLM={config['llm_api_base_url']}")
+
+    # TODO: Task 4 - Implement Telegram bot
+    print("Telegram bot starting... (placeholder)")
+    print(f"Config loaded: LMS_API={config['lms_api_base_url']}")
     print("Press Ctrl+C to stop")
-    
-    # Handler for /start command
-    @dp.message(CommandStart())
-    async def handle_start_command(message: types.Message):
-        """Handle /start command with inline keyboard."""
-        try:
-            response = handle_start("")
-            
-            if isinstance(response, tuple):
-                text, keyboard_data = response
-                # Convert keyboard data to aiogram InlineKeyboardMarkup
-                keyboard = types.InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            types.InlineKeyboardButton(
-                                text=btn["text"],
-                                callback_data=btn["callback_data"],
-                            )
-                            for btn in row
-                        ]
-                        for row in keyboard_data["buttons"]
-                    ]
-                )
-                await message.answer(text, reply_markup=keyboard)
-            else:
-                await message.answer(response)
-        except Exception as e:
-            print(f"[error] handle_start: {e}", file=sys.stderr)
-            await message.answer(f"Error: {str(e)}")
-    
-    # Handler for other commands
-    @dp.message(Command("help", "health", "labs", "scores"))
-    async def handle_command(message: types.Message):
-        """Handle standard commands."""
-        try:
-            command = message.text or ""
-            response = route_command(command, llm_client, lms_client)
-            
-            if isinstance(response, tuple):
-                text, _keyboard = response
-                await message.answer(text)
-            else:
-                await message.answer(response)
-        except Exception as e:
-            print(f"[error] handle_command: {e}", file=sys.stderr)
-            await message.answer(f"Error: {str(e)}")
-    
-    # Handler for natural language messages
-    @dp.message()
-    async def handle_text_message(message: types.Message):
-        """Handle natural language messages."""
-        try:
-            text = message.text or ""
-            
-            # Skip if it's a command (handled by other handlers)
-            if text.startswith("/"):
-                return
-            
-            # Send typing action
-            await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-            
-            # Query LLM for response
-            response = llm_client.query_llm(text, lms_client)
-            await message.answer(response)
-        except Exception as e:
-            print(f"[error] handle_text_message: {e}", file=sys.stderr)
-            await message.answer(f"Error: {str(e)}")
-    
-    # Handler for callback queries (inline keyboard buttons)
-    @dp.callback_query()
-    async def handle_callback_query(callback_query: types.CallbackQuery):
-        """Handle callback queries from inline keyboard buttons."""
-        try:
-            callback_data = callback_query.data
-            response = handle_callback(callback_data, llm_client, lms_client)
-            
-            await callback_query.message.answer(response)
-            await callback_query.answer()
-        except Exception as e:
-            print(f"[error] handle_callback_query: {e}", file=sys.stderr)
-            await callback_query.answer(f"Error: {str(e)}")
-    
-    # Run the bot
-    import asyncio
-    
-    async def main():
-        await dp.start_polling(bot)
-    
+
+    # Keep running (placeholder)
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
@@ -227,17 +132,21 @@ def main() -> None:
     # Check for test mode
     if len(sys.argv) >= 2 and sys.argv[1] == "--test":
         if len(sys.argv) < 3:
-            print("Usage: bot.py --test <message>")
+            print("Usage: bot.py --test <command|message>")
+            print("Example: bot.py --test '/start'")
             print("Example: bot.py --test 'what labs are available'")
             sys.exit(1)
-        
+
         message = sys.argv[2]
-        
-        # Initialize clients for test mode
-        lms_client = LmsClient(config["lms_api_base_url"], config["lms_api_key"])
-        llm_client = LlmClient(config["llm_api_key"], config["llm_api_base_url"], config["llm_api_model"])
-        
-        run_test_mode(message, llm_client, lms_client)
+
+        # Check if it's a slash command or natural language
+        if message.startswith("/"):
+            run_test_mode(message)
+        else:
+            # Natural language query - use intent router
+            response = handle_natural_language(message)
+            print(response)
+            sys.exit(0)
     else:
         # Run as Telegram bot
         run_telegram_bot()
