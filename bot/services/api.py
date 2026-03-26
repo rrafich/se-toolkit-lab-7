@@ -1,94 +1,120 @@
-"""LMS API client functions.
+"""API wrapper functions for LLM tool calling.
 
-All functions return JSON data or a dict with "error" key on failure.
+These functions wrap the LMS API endpoints and return JSON-serializable data
+that can be fed back to the LLM after tool execution.
 """
 
-import requests
-from config import load_config
+from typing import Any
+from .lms_client import LmsClient
 
 
-def _get_config():
-    """Get API configuration."""
-    config = load_config()
-    return {
-        "base_url": config["lms_api_base_url"].rstrip("/"),
-        "api_key": config["lms_api_key"],
-    }
-
-
-def _make_request(method: str, endpoint: str, **kwargs) -> dict | list:
-    """Make an authenticated request to the LMS API.
-    
-    Args:
-        method: HTTP method ("GET" or "POST")
-        endpoint: API endpoint
-        **kwargs: Additional arguments for requests
+def get_items(client: LmsClient) -> list[dict]:
+    """Get list of all labs and tasks.
     
     Returns:
-        JSON response or {"error": "message"} on failure
+        List of items with type, id, and title information.
     """
-    config = _get_config()
-    url = f"{config['base_url']}{endpoint}"
-    headers = kwargs.pop("headers", {})
-    headers["Authorization"] = f"Bearer {config['api_key']}"
+    return client.get_items()
+
+
+def get_learners(client: LmsClient) -> list[dict]:
+    """Get list of enrolled learners and their groups.
     
-    try:
-        if method == "GET":
-            response = requests.get(url, headers=headers, timeout=10, **kwargs)
-        else:
-            response = requests.post(url, headers=headers, timeout=10, **kwargs)
+    Returns:
+        List of learners with name, group, and id information.
+    """
+    result = client._make_request("/learners/")
+    return result if isinstance(result, list) else []
+
+
+def get_scores(client: LmsClient, lab: str) -> list[dict]:
+    """Get score distribution (4 buckets) for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        
+    Returns:
+        List of score distribution data.
+    """
+    result = client._make_request(f"/analytics/scores?lab={lab}")
+    return result if isinstance(result, list) else []
+
+
+def get_pass_rates(client: LmsClient, lab: str) -> list[dict]:
+    """Get per-task average scores and attempt counts for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        
+    Returns:
+        List of pass rate data per task.
+    """
+    return client.get_pass_rates(lab)
+
+
+def get_timeline(client: LmsClient, lab: str) -> list[dict]:
+    """Get submissions per day for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        
+    Returns:
+        List of timeline data with dates and submission counts.
+    """
+    result = client._make_request(f"/analytics/timeline?lab={lab}")
+    return result if isinstance(result, list) else []
+
+
+def get_groups(client: LmsClient, lab: str) -> list[dict]:
+    """Get per-group scores and student counts for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        
+    Returns:
+        List of group data with scores and student counts.
+    """
+    result = client._make_request(f"/analytics/groups?lab={lab}")
+    return result if isinstance(result, list) else []
+
+
+def get_top_learners(client: LmsClient, lab: str, limit: int = 5) -> list[dict]:
+    """Get top N learners by score for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        limit: Number of top learners to return (default: 5)
+        
+    Returns:
+        List of top learners with their scores.
+    """
+    result = client._make_request(f"/analytics/top-learners?lab={lab}&limit={limit}")
+    return result if isinstance(result, list) else []
+
+
+def get_completion_rate(client: LmsClient, lab: str) -> dict[str, Any]:
+    """Get completion rate percentage for a lab.
+    
+    Args:
+        lab: Lab identifier (e.g., "lab-04")
+        
+    Returns:
+        Dictionary with completion rate data.
+    """
+    result = client._make_request(f"/analytics/completion-rate?lab={lab}")
+    return result if isinstance(result, dict) else {}
+
+
+def trigger_sync(client: LmsClient) -> dict[str, Any]:
+    """Trigger a data sync from the autochecker.
+    
+    Returns:
+        Dictionary with sync status information.
+    """
+    # POST request to trigger sync
+    url = f"{client.base_url}/pipeline/sync"
+    import httpx
+    with httpx.Client() as http_client:
+        response = http_client.post(url, headers=client._headers, timeout=30.0)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
-
-
-def get_items() -> list:
-    """Get list of all labs and tasks."""
-    result = _make_request("GET", "/items/")
-    return result if isinstance(result, list) else []
-
-
-def get_learners() -> list:
-    """Get list of enrolled students."""
-    result = _make_request("GET", "/learners/")
-    return result if isinstance(result, list) else []
-
-
-def get_scores(lab: str) -> dict | list:
-    """Get score distribution for a lab."""
-    return _make_request("GET", f"/analytics/scores?lab={lab}")
-
-
-def get_pass_rates(lab: str) -> list:
-    """Get per-task pass rates for a lab."""
-    result = _make_request("GET", f"/analytics/pass-rates?lab={lab}")
-    return result if isinstance(result, list) else []
-
-
-def get_timeline(lab: str) -> list:
-    """Get submission timeline for a lab."""
-    result = _make_request("GET", f"/analytics/timeline?lab={lab}")
-    return result if isinstance(result, list) else []
-
-
-def get_groups(lab: str) -> list:
-    """Get per-group performance for a lab."""
-    result = _make_request("GET", f"/analytics/groups?lab={lab}")
-    return result if isinstance(result, list) else []
-
-
-def get_top_learners(lab: str, limit: int = 5) -> list:
-    """Get top N learners for a lab."""
-    result = _make_request("GET", f"/analytics/top-learners?lab={lab}&limit={limit}")
-    return result if isinstance(result, list) else []
-
-
-def get_completion_rate(lab: str) -> dict:
-    """Get completion rate for a lab."""
-    return _make_request("GET", f"/analytics/completion-rate?lab={lab}")
-
-
-def trigger_sync() -> dict:
-    """Trigger ETL pipeline sync."""
-    return _make_request("POST", "/pipeline/sync", json={})

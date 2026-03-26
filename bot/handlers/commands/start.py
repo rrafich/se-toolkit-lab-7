@@ -1,16 +1,18 @@
 """Handler for /start command."""
 
+from typing import Any
 
-def handle_start(args: str = "") -> str:
+
+def handle_start(args: str = "") -> tuple[str, Any]:
     """Handle the /start command.
-    
+
     Args:
         args: Command arguments (unused for /start)
-    
+
     Returns:
-        Welcome message
+        Tuple of (welcome message, inline keyboard markup)
     """
-    return (
+    message = (
         "👋 Welcome to the LMS Bot!\n\n"
         "I can help you access your learning management system data.\n\n"
         "Available commands:\n"
@@ -21,3 +23,16 @@ def handle_start(args: str = "") -> str:
         "/scores [lab] - View your scores\n\n"
         "You can also ask me questions in natural language!"
     )
+    
+    # Create inline keyboard markup (will be converted to aiogram markup in bot.py)
+    keyboard = {
+        "type": "inline_keyboard",
+        "buttons": [
+            [{"text": "📊 Available Labs", "callback_data": "show_labs"}],
+            [{"text": "🏆 Top Learners", "callback_data": "top_learners"}],
+            [{"text": "📈 Pass Rates", "callback_data": "pass_rates"}],
+            [{"text": "❓ Help", "callback_data": "help"}],
+        ],
+    }
+    
+    return message, keyboard
