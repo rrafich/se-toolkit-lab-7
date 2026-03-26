@@ -91,3 +91,71 @@ By the end of this lab, you should be able to say:
 2. [Backend Integration](./lab/tasks/required/task-2.md) — P0: slash commands + real data
 3. [Intent-Based Natural Language Routing](./lab/tasks/required/task-3.md) — P1: LLM tool use
 4. [Containerize and Document](./lab/tasks/required/task-4.md) — P3: containerize + deploy
+
+## Deploy
+
+### Prerequisites
+
+Before deploying, ensure you have the following environment variables set in `.env.docker.secret`:
+
+```env
+# Telegram Bot
+BOT_TOKEN=your-telegram-bot-token-from-botfather
+
+# LMS API
+LMS_API_KEY=my-lms-api-key
+
+# LLM API (Qwen Code)
+LLM_API_KEY=your-llm-api-key
+LLM_API_MODEL=qwen3-coder-flash
+```
+
+### Start the bot
+
+From the project root directory, run:
+
+```bash
+docker compose --env-file .env.docker.secret up --build -d
+```
+
+This will build and start all services including the bot.
+
+### Verify deployment
+
+Check that the bot container is running:
+
+```bash
+docker compose ps
+```
+
+You should see the `bot` service listed as "running".
+
+Check the bot logs:
+
+```bash
+docker compose logs bot
+```
+
+### Test the bot
+
+1. Open Telegram and find your bot by its username
+2. Send `/start` — you should see a welcome message
+3. Try natural language queries:
+   - "What labs are available?"
+   - "Show me scores for lab 4"
+   - "Which lab has the lowest pass rate?"
+
+### Troubleshooting
+
+**Bot not responding in Telegram:**
+- Check logs: `docker compose logs bot`
+- Verify `BOT_TOKEN` is correct in `.env.docker.secret`
+- Ensure no other bot process is running
+
+**LLM errors (HTTP 401):**
+- The Qwen proxy token may have expired
+- Restart the proxy: `cd ~/qwen-code-api && docker compose restart`
+
+**Backend connection errors:**
+- Verify backend is healthy: `curl http://localhost:42002/health`
+- Check bot can reach backend: `docker compose logs bot | grep backend`
