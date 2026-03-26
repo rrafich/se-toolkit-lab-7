@@ -8,6 +8,7 @@ Usage:
 
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add bot directory to path for imports
 bot_dir = Path(__file__).parent
@@ -20,6 +21,8 @@ from handlers import (
     handle_health,
     handle_labs,
     handle_scores,
+    handle_message,
+    handle_callback,
 )
 from services import route_query
 
@@ -41,10 +44,18 @@ def run_command(command: str) -> str:
         command: The command string (e.g., "/start" or "/scores lab-04")
 
     Returns:
-        The handler's response text
+        The handler's response (string or tuple of text + keyboard)
     """
+    command = command.strip()
+    
+    # If not a command (doesn't start with /), treat as natural language
+    if not command.startswith("/"):
+        if llm_client is None or lms_client is None:
+            return "Error: LLM/LMS clients not available for natural language processing."
+        return handle_message(command, llm_client, lms_client)
+    
     # Parse command and arguments
-    parts = command.strip().split(maxsplit=1)
+    parts = command.split(maxsplit=1)
     cmd = parts[0].lower()
     args = parts[1] if len(parts) > 1 else ""
 
@@ -58,14 +69,21 @@ def run_command(command: str) -> str:
     return handler(args)
 
 
-def run_test_mode(command: str) -> None:
+def run_test_mode(message: str, llm_client: LlmClient, lms_client: LmsClient) -> None:
     """Run in test mode - print response to stdout and exit.
 
     Args:
         command: The command or message to test
     """
-    response = run_command(command)
-    print(response)
+    response = route_command(message, llm_client, lms_client)
+    
+    # Handle tuple response (text + keyboard)
+    if isinstance(response, tuple):
+        text, _keyboard = response
+        print(text)
+    else:
+        print(response)
+    
     sys.exit(0)
 
 
@@ -100,14 +118,17 @@ def run_telegram_bot() -> None:
 
     # Keep running (placeholder)
     try:
-        while True:
-            pass
+        asyncio.run(main())
     except KeyboardInterrupt:
         print("\nBot stopped.")
+    finally:
+        asyncio.run(bot.close())
 
 
 def main() -> None:
     """Main entry point."""
+    config = load_config()
+    
     # Check for test mode
     if len(sys.argv) >= 2 and sys.argv[1] == "--test":
         if len(sys.argv) < 3:
