@@ -14,78 +14,25 @@ bot_dir = Path(__file__).parent
 sys.path.insert(0, str(bot_dir))
 
 from config import load_config
-from handlers import (
-    handle_start,
-    handle_help,
-    handle_health,
-    handle_labs,
-    handle_scores,
-)
-from services import route_query
+from handlers.commands import route_command
 
 
-# Command registry - maps commands to handler functions
-COMMANDS = {
-    "/start": handle_start,
-    "/help": handle_help,
-    "/health": handle_health,
-    "/labs": handle_labs,
-    "/scores": handle_scores,
-}
-
-
-def run_command(command: str) -> str:
-    """Run a command and return the response.
-
-    Args:
-        command: The command string (e.g., "/start" or "/scores lab-04")
-
-    Returns:
-        The handler's response text
-    """
-    # Parse command and arguments
-    parts = command.strip().split(maxsplit=1)
-    cmd = parts[0].lower()
-    args = parts[1] if len(parts) > 1 else ""
-
-    # Look up handler
-    handler = COMMANDS.get(cmd)
-
-    if handler is None:
-        return f"❓ Unknown command: {cmd}\n\nUse /help to see available commands."
-
-    # Call handler and return response
-    return handler(args)
-
-
-def run_test_mode(command: str) -> None:
+def run_test_mode(message: str) -> None:
     """Run in test mode - print response to stdout and exit.
 
     Args:
-        command: The command or message to test
+        message: The message or command to test
     """
-    response = run_command(command)
+    response = route_command(message)
     print(response)
     sys.exit(0)
-
-
-def handle_natural_language(message: str) -> str:
-    """Handle natural language messages via LLM routing.
-
-    Args:
-        message: User's natural language message
-
-    Returns:
-        Response from the intent router
-    """
-    return route_query(message)
 
 
 def run_telegram_bot() -> None:
     """Run the bot as a Telegram bot.
 
     Note: This is a placeholder. Task 4 will implement the actual
-    Telegram bot using python-telegram-bot library.
+    Telegram bot using aiogram library.
     """
     config = load_config()
 
@@ -93,7 +40,7 @@ def run_telegram_bot() -> None:
         print("Error: BOT_TOKEN not set in .env.bot.secret")
         sys.exit(1)
 
-    # TODO: Task 4 - Implement Telegram bot
+    # TODO: Task 4 - Implement Telegram bot with aiogram
     print("Telegram bot starting... (placeholder)")
     print(f"Config loaded: LMS_API={config['lms_api_base_url']}")
     print("Press Ctrl+C to stop")
@@ -116,16 +63,9 @@ def main() -> None:
             print("Example: bot.py --test 'what labs are available'")
             sys.exit(1)
 
-        message = sys.argv[2]
-
-        # Check if it's a slash command or natural language
-        if message.startswith("/"):
-            run_test_mode(message)
-        else:
-            # Natural language query - use intent router
-            response = handle_natural_language(message)
-            print(response)
-            sys.exit(0)
+        # Everything after --test is the message
+        message = " ".join(sys.argv[2:])
+        run_test_mode(message)
     else:
         # Run as Telegram bot
         run_telegram_bot()
