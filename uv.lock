@@ -264,6 +264,7 @@ name = "lms-telegram-bot"
 version = "0.1.0"
 source = { virtual = "bot" }
 dependencies = [
+    { name = "httpx" },
     { name = "python-dotenv" },
     { name = "python-telegram-bot" },
 ]
@@ -275,6 +276,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-telegram-bot", specifier = ">=21.0" },
 ]
