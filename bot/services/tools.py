@@ -39,7 +39,7 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     }
                 },
                 "required": ["lab"],
@@ -56,7 +56,7 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     }
                 },
                 "required": ["lab"],
@@ -73,7 +73,7 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     }
                 },
                 "required": ["lab"],
@@ -90,7 +90,7 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     }
                 },
                 "required": ["lab"],
@@ -107,12 +107,12 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "Number of top learners to return, default 5"
-                    }
+                        "description": "Number of top learners to return, default 5",
+                    },
                 },
                 "required": ["lab"],
             },
@@ -128,7 +128,7 @@ TOOLS = [
                 "properties": {
                     "lab": {
                         "type": "string",
-                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'"
+                        "description": "Lab identifier, e.g., 'lab-01', 'lab-04'",
                     }
                 },
                 "required": ["lab"],
@@ -153,15 +153,18 @@ TOOLS = [
 SYSTEM_PROMPT = """You are a helpful assistant for a Learning Management System (LMS). 
 You have access to backend API tools that provide data about labs, tasks, students, and scores.
 
+IMPORTANT: Always use the provided tool functions to get data. Do NOT write function calls as text.
+The system will automatically call tools when you request them.
+
 When a user asks a question:
 1. First understand what information they need
-2. Call the appropriate tool(s) to get that data
-3. Analyze the results
-4. Provide a clear, helpful answer based on the data
+2. Use the appropriate tool(s) to get that data - the system will call them for you
+3. Once you have the data, analyze it
+4. Provide a clear, helpful answer based on the actual data you received
 
 Available tools:
 - get_items: List all labs and tasks
-- get_learners: List enrolled students
+- get_learners: List enrolled students  
 - get_scores: Score distribution for a lab
 - get_pass_rates: Per-task pass rates for a lab
 - get_timeline: Submission timeline for a lab
@@ -171,8 +174,8 @@ Available tools:
 - trigger_sync: Refresh data from autochecker
 
 For questions like "which lab has the lowest pass rate", you should:
-1. First call get_items to get all labs
-2. Then call get_pass_rates for each lab
+1. First use get_items to get all labs
+2. Then use get_pass_rates for each lab
 3. Compare the results and identify the lowest
 4. Report the answer with the specific lab name and pass rate
 
